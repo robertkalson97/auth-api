@@ -45,7 +45,7 @@ router.use(validator({
  * Routes that can be accessed by everyone
  */
 router.get('/', (req, res, next) => {
-  res.status(200).json({ status: 200, message: "api.guildlabs.site" })
+  res.status(200).json({ status: 200, message: "api ready" })
 });
 router.post('/login', auth.authenticate);
 router.post('/register', auth.register);
