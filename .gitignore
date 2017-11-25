@@ -65,3 +65,6 @@ typings/
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+
+# sensitive configuration
+config/database.js

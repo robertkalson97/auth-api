@@ -49,6 +49,7 @@ router.get('/', (req, res, next) => {
 });
 router.post('/login', auth.authenticate);
 router.post('/register', auth.register);
+router.get('/activate/:token', auth.activate);
 
 /**
  * Routes that can be accessed by authenticated users
