@@ -2,7 +2,6 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const models = require('../models');
-const config = require('../config');
 
 require('../config/passport')(passport);
 
@@ -24,7 +23,7 @@ const auth = {
 
         const token = jwt.sign({
           data: user
-        }, config.secret, {
+        }, process.env.APP_SECRET, {
           expiresIn: '1m'
         });
         

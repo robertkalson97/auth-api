@@ -1,7 +1,6 @@
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const models = require('../models');
-const config = require('../config');
 
 require('../config/passport')(passport);
 
@@ -12,7 +11,7 @@ const dashboard = {
     if (!token) {
       return res.status(500).json({ success: false, message: "no token provided" });
     } else {
-      const decoded = jwt.verify(token, config.secret);
+      const decoded = jwt.verify(token, process.env.APP_SECRET);
       models.User.findOne({
         where: {
           name: decoded.data.name
