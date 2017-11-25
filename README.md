@@ -6,8 +6,8 @@ Scaffolding for a user authentication API with JSON WebTokens. Uses Sequelize OR
 
 ## Todo
 
-- [ ] Add configuration via .env file
-- [ ] Add account activation
+- [x] Add configuration via .env file
+- [x] Add account activation
 - [ ] Add password reset
 - [ ] Add tests
 
