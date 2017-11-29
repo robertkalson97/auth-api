@@ -1,58 +1,69 @@
 const nodemailer = require('nodemailer');
-const passport = require('passport');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const models = require('../models');
-
-require('../config/passport')(passport);
+const jwt        = require('jsonwebtoken');
+const bcrypt     = require('bcrypt');
+const models     = require('../models');
+const mailer     = require('../config/mailer');
 
 const auth = {
-  authenticate: (req, res) => {
+  signin: (req, res, next) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
     models.User.findOne({
       where: {
-        name: req.body.name
+        name: username
       }
     }).then(user => {
       if (!user) {
-        return res.status(401).json({ success: false, message: "user not found" });
+        return res.status(401).json({ success: false, message: "user doesn't exist" });
       } else {
-        const checkPassword = bcrypt.compareSync(req.body.password, user.password);
+        const checkPassword = bcrypt.compareSync(password, user.password);
 
         if (!checkPassword) {
           return res.status(401).json({ success: false, message: "wrong password" });
         }
 
+        const payload = {
+          name: user.name,
+          email: user.email,
+          activated: user.isActivated
+        }
+
         const token = jwt.sign({
-          data: user
+          data: payload
         }, process.env.APP_SECRET, {
           expiresIn: '1m'
         });
-        
-        res.status(200).json({ success: true, message: "user authenticated", token: token });
+
+        res.status(200).json({ success: true, message: 'user authenticated', token: token });
       }
     }).catch(err => {
       throw new Error(err);
     });
   },
-  register: (req, res) => {
-    const username = req.body.name;
+  signup: (req, res, next) => {
+    const username = req.body.username;
     const email = req.body.email;
-    const password = bcrypt.hashSync(req.body.password, 12);
+    const password = bcrypt.hashSync(req.body.password, 10);
 
     // validate username
-    req.checkBody('name')
-      .isAlphanumeric()
-      .withMessage('only letters and numbers')
-      .trim();
-    req.checkBody('name', 'username already exists').isUsernameAvailable();
+    req.checkBody('username')
+       .isAlphanumeric()
+       .withMessage('only letters and numbers')
+       .trim();
+    req.checkBody('username')
+       .isUsernameAvailable()
+       .withMessage('username already exists');
 
     // validate email
     req.checkBody('email')
-      .isEmail()
-      .withMessage('must be an email')
-      .trim()
-      .normalizeEmail();
-    req.checkBody('email', 'email already in use').isEmailAvailable();
+       .isEmail()
+       .withMessage('must be an email')
+       .trim()
+       .normalizeEmail();
+    req.checkBody('email')
+       .isEmailAvailable()
+       .withMessage('email already in use');
 
     // create username / output errors
     req.asyncValidationErrors().then(() => {
@@ -61,45 +72,37 @@ const auth = {
         email: email,
         password: password
       }).then(result => {
+        const userid = result.id;
+        const email = result.email;
         const token = generateToken();
 
+        // create activation token
         models.UserActivation.create({
           token: token,
-          user_id: result.id
-        });
-
-        // TODO Globalize the nodemailer transport instance
-        const transport = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          }
+          user_id: userid
         });
 
         // send activation mail
-        const mail = {
+        mailer.sendMail({
           from: process.env.SMTP_USER,
-          to: result.email,
+          to: email,
           subject: 'Please activate your account',
           text: `Open this link in your browser, to activate your account: http://localhost:3000/v1/activate/${token}`
-        }
-
-        transport.sendMail(mail, (error, info) => {
-          if (error) {
-            return console.error(error);
+        }, (err, info) => {
+          if (err) {
+            return console.error(err);
           }
-          console.log('Activation Mail sent: %s', info.messageId);
+
+          console.info(`Activation Mail sent: ${info.messageId}`);
         });
 
         res.status(200).json({ success: true, message: "user registered" });
       });
-    }).catch(errors => {
-      res.status(422).json({ success: false, errors: errors });
+    }).catch(err => {
+      res.status(422).json({ success: false, errors: err });
     });
   },
-  activate: (req, res) => {
+  activate: (req, res, next) => {
     const token = req.params.token;
 
     models.UserActivation.findOne({
@@ -110,7 +113,6 @@ const auth = {
       if (!result) {
         res.status(500).json({ success: false, message: "token does not exist" });
       } else {
-        // set user to activated
         models.User.update({
           isActivated: 1
         }, {
@@ -118,19 +120,36 @@ const auth = {
             id: result.user_id
           }
         }).then(() => {
-          res.status(200).json({ success: true, message: "user has been activated" });
-        });
+          res.status(200).json({ success: true, message: "user activated" });
 
-        // delete the token
-        models.UserActivation.destroy({
-          where: {
-            token: token
-          }
+          // delete used token
+          models.UserActivation.destroy({
+            where: {
+              token: token
+            }
+          }).catch(err => {
+            throw new Error(err);
+          });
+        }).catch(err => {
+          throw new Error(err);
         });
       }
-    }).catch(err => {
-      throw new Error(err);
-    });
+    })
+  },
+  verify: (req, res, next) => {
+    const token = req.headers.authorization;
+
+    if (!token) {
+      return res.status().json({ success: false, message: 'no token provided' });
+    } else {
+      jwt.verify(token, process.env.APP_SECRET, (err, decoded) => {
+        if (err) {
+          throw new Error(err);
+        } else {
+          res.status(200).json({ success: true, data: decoded.data });
+        }
+      })
+    }
   }
 };
 
@@ -142,6 +161,5 @@ generateToken = () => {
     return v.toString(16);
   });
 }
-
 
 module.exports = auth;

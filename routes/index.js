@@ -2,10 +2,8 @@ const express = require('express');
 const validator = require('express-validator');
 const router = express.Router();
 
-const auth = require('./auth');
-const dashboard = require('./dashboard');
-
 const models = require('../models');
+const auth = require('./auth');
 
 /**
  * Make validator available on all routes
@@ -45,15 +43,15 @@ router.use(validator({
  * Routes that can be accessed by everyone
  */
 router.get('/', (req, res, next) => {
-  res.status(200).json({ status: 200, message: "api ready" })
+  res.status(200).json({ status: 200, message: "api ready" });
 });
-router.post('/login', auth.authenticate);
-router.post('/register', auth.register);
+router.post('/signup', auth.signup);
+router.post('/signin', auth.signin);
 router.get('/activate/:token', auth.activate);
 
 /**
  * Routes that can be accessed by authenticated users
  */
-router.get('/dashboard', dashboard.index);
+router.get('/verify', auth.verify);
 
 module.exports = router;

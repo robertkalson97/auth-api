@@ -1,17 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const logger = require('morgan');
+const express    = require('express');
+const cors       = require('cors');
+const logger     = require('morgan');
 const bodyParser = require('body-parser');
-const passport = require('passport');
+const app        = express();
 
-const app = express();
-
+// make .env usage global
 require('dotenv').config();
 
+// config express
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
-app.use(passport.initialize());
 
 // setup api headers
 app.all('/*', cors(), (req, res, next) => {

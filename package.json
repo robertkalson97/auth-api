@@ -1,6 +1,6 @@
 {
   "name": "auth-api",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Scaffolding for an authentication API",
   "main": "app.js",
   "scripts": {
@@ -21,8 +21,6 @@
     "morgan": "^1.9.0",
     "mysql2": "^1.5.0",
     "nodemailer": "^4.4.0",
-    "passport": "^0.4.0",
-    "passport-jwt": "^3.0.1",
     "pg": "^7.4.0",
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.22.6"
