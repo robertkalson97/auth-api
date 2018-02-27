@@ -1,43 +1,53 @@
-const express    = require('express');
-const cors       = require('cors');
-const logger     = require('morgan');
+const dbConfig = require('./knexfile');
+const Knex = require('knex');
+const { Model } = require('objection');
+
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const app        = express();
+const passport = require('passport');
 
-// make .env usage global
-require('dotenv').config();
+const index = require('./routes/index');
+const auth = require('./routes/auth');
 
-// config express
+// Initialize knex
+const knex = Knex(dbConfig.development);
+
+// Bind all Models to knex instance
+Model.knex(knex);
+
+// Initalize app
+const app = express();
+
+// App Middlewares
+app.use(cors());
 app.use(logger('dev'));
+app.use(passport.initialize());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 
-// setup api headers
-app.all('/*', cors(), (req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-  } else {
-    next();
-  }
-});
+// Bring in the passport strategy
+require('./config/passport')(passport);
 
-// setup api endpoints
-app.use('/v1', require('./routes'));
+// Define Routes
+app.use('/', index);
+app.use('/auth', auth);
 
-// catch 404 and forward to error handler
+// Catch 404 and forward to error handler
 app.use((req, res, next) => {
-  const err = new Error('Not Found');
+  const err = new Error('NotFound');
   err.status = 404;
   next(err);
 });
 
-// error handler
+// Error handler
 app.use((err, req, res, next) => {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.status(err.status || 500).json({ msg: err.message });
+  console.error(err.stack);
+});
 
-  // render error page
-  res.status(err.status || 500).json({ status: err.status, message: res.locals.message });
-})
-
-module.exports = app
+module.exports = app;

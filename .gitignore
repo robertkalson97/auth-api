@@ -66,5 +66,5 @@ typings/
 !.vscode/extensions.json
 .history
 
-# sensitive configuration
-config/database.js
+### Sensitive ###
+/knexfile.js
