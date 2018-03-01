@@ -4,9 +4,12 @@
 ## Info
 This is my first API project. I you have any clues for me on security or anything else, please let me know.
 
+## Todo
+- [ ] Better error handling
+- [ ] Log errors to a file
+
 ## Known issues
-- `objection-unique` does not work with `objection@1.0.0`. Will write my own uniqueness check for Objection.js.
-- `created_at` and `updated_at` don't include the dates.
+Phew. No known issues for now.
 
 ## License
 Code published under the MIT License.
