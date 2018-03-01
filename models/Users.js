@@ -1,4 +1,4 @@
-const Model = require('objection').Model;
+const Model = require('./BaseModel');
 const Password = require('objection-password')();
 const Unique = require('objection-unique')({
   fields: ['username', 'email'],
